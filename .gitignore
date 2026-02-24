@@ -26,3 +26,4 @@ book/
 .kilocode/
 skills/
 skills-lock.json
+*.iml
