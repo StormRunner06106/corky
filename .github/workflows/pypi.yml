@@ -43,7 +43,7 @@ jobs:
           args: --release --out dist --features vendored-openssl
           manylinux: auto
           before-script-linux: |
-            yum install -y perl-IPC-Cmd || apk add --no-cache perl-utils || true
+            yum install -y perl-core || apk add --no-cache perl || true
             git clone --depth 1 https://github.com/btakita/instruction-files.git ../instruction-files
 
       - uses: actions/upload-artifact@v4
