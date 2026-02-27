@@ -41,7 +41,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist
+          args: --release --out dist --features vendored-openssl
           manylinux: auto
           before-script-linux: git clone --depth 1 https://github.com/btakita/instruction-files.git ../instruction-files
 
