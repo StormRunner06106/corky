@@ -597,6 +597,13 @@ pub enum FilterCommands {
         #[arg(long)]
         dry_run: bool,
     },
+
+    /// Check if local filters match Gmail (read-only drift detection)
+    Check {
+        /// Account name (must match the one used for auth)
+        #[arg(long)]
+        account: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]

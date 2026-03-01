@@ -154,6 +154,23 @@ fn try_auto_upgrade() -> bool {
     false
 }
 
+/// Check for Gmail filter drift (best-effort, never crashes the watch loop).
+fn check_filter_drift() {
+    match crate::filter::check::run(None) {
+        Ok(true) => {} // in sync, no output needed
+        Ok(false) => {
+            eprintln!("corky watch: filter drift detected — run `corky filter push` to sync");
+        }
+        Err(e) => {
+            // Silently ignore auth/config errors in watch mode
+            let msg = e.to_string();
+            if !msg.contains("No [gmail] section") && !msg.contains("not found at") {
+                eprintln!("corky watch: filter check failed: {}", msg);
+            }
+        }
+    }
+}
+
 /// One sync + mailbox sync cycle. Returns count of labels with new messages.
 fn poll_once(notify_enabled: bool) -> usize {
     let accounts = match load_accounts(None) {
@@ -242,8 +259,11 @@ pub async fn run(interval_override: Option<u64>) -> Result<()> {
     );
 
     let mut cycles_since_upgrade_check: u64 = 0;
+    let mut cycles_since_filter_check: u64 = 0;
     // Check for upgrades every N cycles (roughly once per hour)
     let upgrade_check_every = (3600 / interval).max(1);
+    // Check filter drift every N cycles (roughly once per hour)
+    let filter_check_every = upgrade_check_every;
 
     loop {
         if shutdown.load(Ordering::Relaxed) {
@@ -276,6 +296,17 @@ pub async fn run(interval_override: Option<u64>) -> Result<()> {
                 tokio::task::spawn_blocking(try_auto_upgrade).await?;
                 // If we get here, exec() didn't happen (no upgrade or failed)
             }
+        }
+
+        if shutdown.load(Ordering::Relaxed) {
+            break;
+        }
+
+        // Filter drift check (once per hour, best-effort)
+        cycles_since_filter_check += 1;
+        if cycles_since_filter_check >= filter_check_every {
+            cycles_since_filter_check = 0;
+            tokio::task::spawn_blocking(check_filter_drift).await?;
         }
 
         if shutdown.load(Ordering::Relaxed) {

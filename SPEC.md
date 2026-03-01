@@ -756,7 +756,23 @@ With `--dry-run`: shows existing filters, what would be deleted, and what would 
 
 **Required OAuth scopes:** `gmail.settings.basic` + `gmail.labels`. If the token was issued before `gmail.labels` was added to the scope list, re-authenticate with `corky filter auth`.
 
-### 5.29 transcribe
+### 5.29 filter check
+
+```
+corky filter check [--account NAME]
+```
+
+Read-only drift detection: compares `[[gmail.filters]]` in `.corky.toml` against live Gmail filters without making changes.
+
+Flow:
+1. Load local filters from `.corky.toml`, convert to API format
+2. Fetch remote filters from Gmail (2 API calls: filters + labels)
+3. Normalize both to comparable criteria signatures (from/to/query)
+4. Report: filters in `.corky.toml` but not on Gmail, filters on Gmail but not in `.corky.toml`
+
+**Watch integration:** `corky watch` runs this check hourly (same cadence as auto-upgrade). On drift, prints a warning suggesting `corky filter push`. Auth or config errors are silently ignored in watch mode.
+
+### 5.30 transcribe
 
 ```
 corky transcribe FILE [--model NAME] [--language CODE]

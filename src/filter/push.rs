@@ -10,23 +10,22 @@ use crate::config::corky_config::{self, GmailFilter};
 
 const GMAIL_API: &str = "https://gmail.googleapis.com/gmail/v1/users/me";
 
-// --- API response types ---
+// --- API response types (pub(crate) for reuse in check.rs) ---
 
 #[derive(Debug, serde::Deserialize)]
-struct FilterListResponse {
+pub(crate) struct FilterListResponse {
     #[serde(default)]
     filter: Vec<ExistingFilter>,
 }
 
 #[derive(Debug, serde::Deserialize)]
-struct ExistingFilter {
-    id: String,
+pub(crate) struct ExistingFilter {
+    pub id: String,
     #[serde(default)]
-    criteria: serde_json::Value,
-    // action is deserialized but only used implicitly (complete filter data for dry-run display)
+    pub criteria: serde_json::Value,
     #[serde(default)]
     #[allow(dead_code)]
-    action: serde_json::Value,
+    pub action: serde_json::Value,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -41,34 +40,34 @@ struct GmailLabelEntry {
     name: String,
 }
 
-// --- API request types ---
+// --- API request types (pub(crate) for reuse in check.rs) ---
 
 #[derive(Debug, serde::Serialize)]
-struct FilterCreateRequest {
-    criteria: ApiCriteria,
-    action: ApiAction,
+pub(crate) struct FilterCreateRequest {
+    pub(crate) criteria: ApiCriteria,
+    pub(crate) action: ApiAction,
 }
 
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ApiCriteria {
+pub(crate) struct ApiCriteria {
     #[serde(skip_serializing_if = "Option::is_none")]
-    from: Option<String>,
+    pub(crate) from: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    to: Option<String>,
+    pub(crate) to: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    query: Option<String>,
+    pub(crate) query: Option<String>,
 }
 
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ApiAction {
+pub(crate) struct ApiAction {
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    add_label_ids: Vec<String>,
+    pub(crate) add_label_ids: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    remove_label_ids: Vec<String>,
+    pub(crate) remove_label_ids: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    forward: Option<String>,
+    pub(crate) forward: Option<String>,
 }
 
 // --- Main entry point ---
@@ -171,7 +170,7 @@ pub fn run(account: Option<&str>, dry_run: bool) -> Result<()> {
 
 // --- Label resolution ---
 
-fn fetch_label_map(token: &str) -> Result<HashMap<String, String>> {
+pub(crate) fn fetch_label_map(token: &str) -> Result<HashMap<String, String>> {
     let resp = api_get(token, &format!("{}/labels", GMAIL_API))?;
     let body: LabelListResponse = resp
         .into_json()
@@ -211,7 +210,7 @@ fn resolve_label_id(name: &str, label_map: &HashMap<String, String>) -> Result<S
 
 // --- Filter conversion ---
 
-fn convert_filters(
+pub(crate) fn convert_filters(
     filters: &[GmailFilter],
     label_map: &HashMap<String, String>,
 ) -> Result<Vec<FilterCreateRequest>> {
@@ -298,7 +297,7 @@ fn convert_one(
 
 // --- API calls ---
 
-fn fetch_existing_filters(token: &str) -> Result<Vec<ExistingFilter>> {
+pub(crate) fn fetch_existing_filters(token: &str) -> Result<Vec<ExistingFilter>> {
     let resp = api_get(token, &format!("{}/settings/filters", GMAIL_API))?;
     let body: FilterListResponse = resp
         .into_json()

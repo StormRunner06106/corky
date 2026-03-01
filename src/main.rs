@@ -198,6 +198,10 @@ fn main() -> Result<()> {
             FilterCommands::Push { account, dry_run } => {
                 corky::filter::push::run(account.as_deref(), dry_run)
             }
+            FilterCommands::Check { account } => {
+                corky::filter::check::run(account.as_deref())?;
+                Ok(())
+            }
         },
         Commands::Transcribe { file, model, language, output, speakers, diarize } => {
             corky::transcribe::run(&file, model.as_deref(), language.as_deref(), output.as_deref(), &speakers, diarize)

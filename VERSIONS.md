@@ -4,6 +4,10 @@ Corky is alpha software. Expect breaking changes between minor versions.
 
 Use `BREAKING CHANGE:` prefix in version entries to flag incompatible changes.
 
+## 0.12.3
+
+- **Filter drift detection**: `corky filter check` compares local `.corky.toml` filters against live Gmail filters (read-only, 2 API calls). `corky watch` runs this hourly and warns on drift.
+
 ## 0.12.2
 
 - **BREAKING CHANGE: `corky social` → `corky linkedin`**: All social media commands scoped under platform-specific subcommand. `corky social draft linkedin` becomes `corky linkedin draft`, etc. Internal `social/` module unchanged. Convention: each platform gets its own top-level subcommand when added.
