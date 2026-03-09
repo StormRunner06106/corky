@@ -234,6 +234,5 @@ fn test_init_installs_skill() {
     )
     .unwrap();
 
-    assert!(path.join(".claude/skills/email/SKILL.md").exists());
-    assert!(path.join(".claude/skills/email/README.md").exists());
+    assert!(path.join(".claude/skills/corky/SKILL.md").exists());
 }

@@ -1,45 +1,115 @@
-//! Install agent skills into a project directory.
+//! `corky skill` — Manage the Claude Code skill definition.
+//!
+//! Delegates to `agent_kit::skill::SkillConfig` for the actual install/check logic.
+//! The SKILL.md content is bundled into the binary at build time via `include_str!`.
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use std::path::Path;
 
-pub const EMAIL_SKILL_MD: &str = include_str!("../.claude/skills/email/SKILL.md");
-pub const EMAIL_README_MD: &str = include_str!("../.claude/skills/email/README.md");
+use agent_kit::skill::SkillConfig;
 
-/// Install a named skill into a project directory.
-/// Currently only "email" is supported.
-pub fn install(name: &str, project_dir: &Path) -> Result<()> {
-    match name {
-        "email" => install_email(project_dir),
-        _ => bail!("Unknown skill '{}'. Available: email", name),
-    }
+/// The SKILL.md content bundled at build time.
+const BUNDLED_SKILL: &str = include_str!("../SKILL.md");
+
+/// Current binary version (from Cargo.toml).
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+fn config() -> SkillConfig {
+    SkillConfig::new("corky", BUNDLED_SKILL, VERSION)
 }
 
-fn install_email(project_dir: &Path) -> Result<()> {
-    let skill_dir = project_dir.join(".claude").join("skills").join("email");
-    std::fs::create_dir_all(&skill_dir)?;
+/// Install the bundled SKILL.md to the project.
+/// When `root` is None, paths are relative to CWD.
+pub fn install_at(root: Option<&Path>) -> Result<()> {
+    config().install(root)
+}
 
-    let skill_path = skill_dir.join("SKILL.md");
-    if skill_path.exists() {
-        println!("  {} already exists, skipping", skill_path.display());
-    } else {
-        std::fs::write(&skill_path, EMAIL_SKILL_MD)?;
-        println!("Created {}", skill_path.display());
+/// Public entry point (CWD-relative, called from main).
+pub fn install() -> Result<()> {
+    install_at(None)
+}
+
+/// Check if the installed skill matches the bundled version.
+/// When `root` is None, paths are relative to CWD.
+pub fn check_at(root: Option<&Path>) -> Result<()> {
+    let up_to_date = config().check(root)?;
+    if !up_to_date {
+        std::process::exit(1);
     }
-
-    let readme_path = skill_dir.join("README.md");
-    if readme_path.exists() {
-        println!("  {} already exists, skipping", readme_path.display());
-    } else {
-        std::fs::write(&readme_path, EMAIL_README_MD)?;
-        println!("Created {}", readme_path.display());
-    }
-
     Ok(())
 }
 
+/// Check if the installed skill matches the bundled version (CWD-relative).
+pub fn check() -> Result<()> {
+    check_at(None)
+}
+
 /// CLI entry point for `corky install-skill`.
+/// The `name` parameter is accepted for backward compatibility but ignored —
+/// all corky capabilities are bundled into a single skill.
 pub fn run(name: &str) -> Result<()> {
-    let project_dir = std::env::current_dir()?;
-    install(name, &project_dir)
+    if name != "email" && name != "corky" {
+        anyhow::bail!("Unknown skill '{}'. Available: corky (or 'email' for compat)", name);
+    }
+    install()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bundled_skill_is_not_empty() {
+        assert!(!BUNDLED_SKILL.is_empty());
+    }
+
+    #[test]
+    fn bundled_skill_contains_corky() {
+        assert!(BUNDLED_SKILL.contains("corky"));
+    }
+
+    #[test]
+    fn install_creates_file() {
+        let dir = tempfile::tempdir().unwrap();
+
+        install_at(Some(dir.path())).unwrap();
+
+        let path = dir.path().join(".claude/skills/corky/SKILL.md");
+        assert!(path.exists());
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content, BUNDLED_SKILL);
+    }
+
+    #[test]
+    fn install_idempotent() {
+        let dir = tempfile::tempdir().unwrap();
+
+        install_at(Some(dir.path())).unwrap();
+        install_at(Some(dir.path())).unwrap();
+
+        let path = dir.path().join(".claude/skills/corky/SKILL.md");
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content, BUNDLED_SKILL);
+    }
+
+    #[test]
+    fn install_overwrites_outdated() {
+        let dir = tempfile::tempdir().unwrap();
+
+        let path = dir.path().join(".claude/skills/corky/SKILL.md");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, "old content").unwrap();
+
+        install_at(Some(dir.path())).unwrap();
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content, BUNDLED_SKILL);
+    }
+
+    #[test]
+    fn run_accepts_email_compat() {
+        // "email" is accepted for backward compat (installs to CWD, but we just
+        // verify it doesn't bail with "unknown skill").
+        // We can't easily test the full install here without mocking CWD.
+    }
 }

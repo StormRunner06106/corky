@@ -119,11 +119,8 @@ pub fn run(
             std::fs::copy(&voice_file, tmp.join("voice.md"))?;
         }
 
-        // .claude/skills/email/
-        let skill_dir = tmp.join(".claude/skills/email");
-        std::fs::create_dir_all(&skill_dir)?;
-        std::fs::write(skill_dir.join("SKILL.md"), crate::skill::EMAIL_SKILL_MD)?;
-        std::fs::write(skill_dir.join("README.md"), crate::skill::EMAIL_README_MD)?;
+        // .claude/skills/corky/
+        crate::skill::install_at(Some(tmp))?;
 
         // directories
         std::fs::create_dir_all(tmp.join("conversations"))?;
@@ -176,11 +173,8 @@ pub fn run(
             std::fs::copy(&voice_file, mb_dir.join("voice.md"))?;
         }
 
-        // .claude/skills/email/
-        let skill_dir = mb_dir.join(".claude/skills/email");
-        std::fs::create_dir_all(&skill_dir)?;
-        std::fs::write(skill_dir.join("SKILL.md"), crate::skill::EMAIL_SKILL_MD)?;
-        std::fs::write(skill_dir.join("README.md"), crate::skill::EMAIL_README_MD)?;
+        // .claude/skills/corky/
+        crate::skill::install_at(Some(&mb_dir))?;
     }
 
     // 5. Update .corky.toml with routing and mailbox config

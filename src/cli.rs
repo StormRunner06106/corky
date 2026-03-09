@@ -123,11 +123,16 @@ pub enum Commands {
         interval: Option<u64>,
     },
 
-    /// Install an agent skill
+    /// Install an agent skill (legacy — use `skill install` instead)
+    #[command(hide = true)]
     InstallSkill {
-        /// Skill name (currently: email)
+        /// Skill name
         name: String,
     },
+
+    /// Manage the Claude Code skill definition
+    #[command(subcommand)]
+    Skill(SkillCommands),
 
     /// Audit instruction files
     AuditDocs,
@@ -675,6 +680,14 @@ pub enum LabelCommands {
         #[arg(long)]
         dry_run: bool,
     },
+}
+
+#[derive(Subcommand)]
+pub enum SkillCommands {
+    /// Install the skill definition to .claude/skills/corky/SKILL.md
+    Install,
+    /// Check if the installed skill matches the binary version
+    Check,
 }
 
 #[derive(Subcommand)]

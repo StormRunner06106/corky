@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 
-use corky::cli::{CalCommands, Cli, Commands, ContactCommands, DocCommands, DraftCommands, FilterCommands, LabelCommands, LinkedinCommands, MailboxCommands, ScheduleCommands, SlackCommands, SyncCommands, TopicCommands};
+use corky::cli::{CalCommands, Cli, Commands, ContactCommands, DocCommands, DraftCommands, FilterCommands, LabelCommands, LinkedinCommands, MailboxCommands, ScheduleCommands, SkillCommands, SlackCommands, SyncCommands, TopicCommands};
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -89,6 +89,10 @@ fn main() -> Result<()> {
         } => corky::contact::add::run(&name, &emails),
         Commands::Watch { interval } => corky::watch::run(interval),
         Commands::InstallSkill { name } => corky::skill::run(&name),
+        Commands::Skill(cmd) => match cmd {
+            SkillCommands::Install => corky::skill::install(),
+            SkillCommands::Check => corky::skill::check(),
+        },
         Commands::AuditDocs => corky::audit_docs::run(),
         Commands::Help { filter } => corky::help::run(filter.as_deref()),
         Commands::Unanswered { scope, from_name } => {

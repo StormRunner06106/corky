@@ -171,7 +171,7 @@ pub fn run(
     }
 
     // 6. Install email skill
-    crate::skill::install("email", &path)?;
+    crate::skill::install_at(Some(&path))?;
 
     // 7. Register mailbox in app config
     app_config::add_mailbox(mailbox, &path.to_string_lossy())?;

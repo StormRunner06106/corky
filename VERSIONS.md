@@ -4,6 +4,10 @@ Corky is alpha software. Expect breaking changes between minor versions.
 
 Use `BREAKING CHANGE:` prefix in version entries to flag incompatible changes.
 
+## 0.13.4
+
+- **Unified corky skill via agent-kit**: Bundle `SKILL.md` via `include_str!`, replacing separate `.claude/skills/email/` and `.claude/skills/agent-doc/` directories. `corky skill install/check` commands wired via `agent_kit::skill::SkillConfig`. Added `agent-kit` dependency.
+
 ## 0.13.3
 
 - **Calendar event creation**: `corky cal create` creates calendar events with summary, start, end, optional description and location. Supports RFC 3339 datetime and `YYYY-MM-DD` all-day events.
