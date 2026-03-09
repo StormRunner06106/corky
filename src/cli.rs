@@ -718,4 +718,45 @@ pub enum CalCommands {
         #[arg(long)]
         account: Option<String>,
     },
+
+    /// Create a calendar event
+    Create {
+        /// Event title/summary
+        summary: String,
+
+        /// Start time (RFC 3339, e.g. 2026-03-10T14:00:00-05:00, or YYYY-MM-DD for all-day)
+        #[arg(long)]
+        start: String,
+
+        /// End time (RFC 3339, e.g. 2026-03-10T15:00:00-05:00, or YYYY-MM-DD for all-day)
+        #[arg(long)]
+        end: String,
+
+        /// Event description
+        #[arg(long)]
+        description: Option<String>,
+
+        /// Event location
+        #[arg(long)]
+        location: Option<String>,
+
+        /// Account name (must match the one used for auth)
+        #[arg(long)]
+        account: Option<String>,
+    },
+
+    /// Check availability in a time range
+    Check {
+        /// Range start (RFC 3339, e.g. 2026-03-10T09:00:00-05:00)
+        #[arg(long)]
+        start: String,
+
+        /// Range end (RFC 3339, e.g. 2026-03-10T17:00:00-05:00)
+        #[arg(long)]
+        end: String,
+
+        /// Account name (must match the one used for auth)
+        #[arg(long)]
+        account: Option<String>,
+    },
 }

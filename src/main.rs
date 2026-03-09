@@ -200,6 +200,12 @@ fn main() -> Result<()> {
             CalCommands::Delete { query, all, dry_run, account } => {
                 corky::cal::delete::run(&query, all, dry_run, account.as_deref())
             }
+            CalCommands::Create { summary, start, end, description, location, account } => {
+                corky::cal::create::run(&summary, &start, &end, description.as_deref(), location.as_deref(), account.as_deref())
+            }
+            CalCommands::Check { start, end, account } => {
+                corky::cal::check::run(&start, &end, account.as_deref())
+            }
         },
         Commands::Filter(cmd) => match cmd {
             FilterCommands::Build { input, output } => {

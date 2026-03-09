@@ -4,6 +4,11 @@ Corky is alpha software. Expect breaking changes between minor versions.
 
 Use `BREAKING CHANGE:` prefix in version entries to flag incompatible changes.
 
+## 0.13.3
+
+- **Calendar event creation**: `corky cal create` creates calendar events with summary, start, end, optional description and location. Supports RFC 3339 datetime and `YYYY-MM-DD` all-day events.
+- **Calendar availability check**: `corky cal check` checks calendar availability for a time range. Shows busy periods and free time summary.
+
 ## 0.13.2
 
 - **Non-interactive OAuth in watch mode**: `check_filter_drift()` uses `get_access_token_noninteractive()` — never opens a browser. Logs actionable "Run `corky filter auth`" message when token is expired.

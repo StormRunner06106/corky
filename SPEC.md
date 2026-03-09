@@ -1440,6 +1440,8 @@ Manage Google Calendar events via the Calendar API v3. Reuses Gmail OAuth creden
 | `corky cal auth [--account NAME]` | OAuth2 browser flow for Calendar scope |
 | `corky cal list [--limit N] [--query Q] [--account NAME]` | List upcoming events (default 10) |
 | `corky cal delete QUERY [--all] [--dry-run] [--account NAME]` | Delete events matching query |
+| `corky cal create SUMMARY --start DT --end DT [--description TEXT] [--location TEXT] [--account NAME]` | Create a calendar event |
+| `corky cal check --start DT --end DT [--account NAME]` | Check availability in a time range |
 
 ### 15.3 Delete Behavior
 
@@ -1447,7 +1449,22 @@ Manage Google Calendar events via the Calendar API v3. Reuses Gmail OAuth creden
 - With `--all`: deduplicates by `recurring_event_id` and deletes the series root event, removing all past and future instances
 - `--dry-run`: shows matching events without deleting
 
-### 15.4 Edge Cases
+### 15.4 Create Behavior
+
+- `SUMMARY` is a positional argument (event title)
+- `--start` and `--end` accept RFC 3339 datetime (e.g. `2026-03-10T14:00:00-05:00`) or `YYYY-MM-DD` for all-day events
+- All-day events use the `date` field; timed events use `dateTime` in the Google Calendar API
+- On success: prints event ID and link to Google Calendar
+
+### 15.5 Check Behavior
+
+- `--start` and `--end` must be RFC 3339 datetime (all-day dates not supported)
+- Fetches up to 50 events in the range via `singleEvents=true` (expands recurring)
+- Reports each busy period with event name and duration
+- Prints summary: total busy time, free time, and total range
+- If no events: reports fully available
+
+### 15.6 Edge Cases
 
 | ID | Scenario | Behavior |
 |----|----------|----------|
@@ -1456,6 +1473,9 @@ Manage Google Calendar events via the Calendar API v3. Reuses Gmail OAuth creden
 | C3 | No events match query | "No events matching '...'" |
 | C4 | Recurring series delete | Deletes series root, not instances |
 | C5 | Event already deleted | 404/410 silently ignored |
+| C6 | Invalid datetime for create | Error with format hint (RFC 3339 or YYYY-MM-DD) |
+| C7 | Check end before start | "End time must be after start time" |
+| C8 | Check with no events | "Fully available" message |
 
 ## 16. SMS Import
 
