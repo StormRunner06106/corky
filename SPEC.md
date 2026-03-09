@@ -1439,32 +1439,63 @@ Manage Google Calendar events via the Calendar API v3. Reuses Gmail OAuth creden
 |---------|-------------|
 | `corky cal auth [--account NAME]` | OAuth2 browser flow for Calendar scope |
 | `corky cal list [--limit N] [--query Q] [--account NAME]` | List upcoming events (default 10) |
+| `corky cal create SUMMARY START END [--description D] [--location L] [--account NAME]` | Create a calendar event |
 | `corky cal delete QUERY [--all] [--dry-run] [--account NAME]` | Delete events matching query |
-| `corky cal create SUMMARY --start DT --end DT [--description TEXT] [--location TEXT] [--account NAME]` | Create a calendar event |
-| `corky cal check --start DT --end DT [--account NAME]` | Check availability in a time range |
+| `corky cal check START END [--account NAME]` | Check availability in a time range |
 
-### 15.3 Delete Behavior
+### 15.3 Auth
+
+`corky cal auth` runs the OAuth2 browser flow to obtain a Calendar-scoped token. Reuses the same `client_id` / `client_secret` from `[gmail]` config. If a valid Gmail token already exists, the Calendar scope is added to the existing authorization. The `--account` flag selects which Gmail account to authorize (defaults to the first configured account).
+
+### 15.4 List
+
+`corky cal list` fetches upcoming events from the primary calendar.
+
+- `--limit N` — maximum number of events to return (default: 10)
+- `--query Q` — free-text search filter passed to the Calendar API
+- `--account NAME` — select Gmail account
+
+Output: one line per event with date/time, summary, and location (if set).
+
+### 15.5 Create
+
+`corky cal create SUMMARY START END` creates a new event on the primary calendar.
+
+**Positional arguments:**
+- `SUMMARY` — event title
+- `START` — start time as RFC 3339 datetime (`2026-03-10T09:00:00-07:00`) or `YYYY-MM-DD` for all-day events
+- `END` — end time as RFC 3339 datetime or `YYYY-MM-DD` for all-day events
+
+**Options:**
+- `--description D` — event description / notes
+- `--location L` — event location
+- `--account NAME` — select Gmail account
+
+When both `START` and `END` are `YYYY-MM-DD` (date-only), the event is created as an all-day event using `date` fields instead of `dateTime`. Mixed date/datetime args are rejected with an error. On success: prints event ID and link to Google Calendar.
+
+### 15.6 Delete
+
+`corky cal delete QUERY` searches for events matching `QUERY` and deletes them.
 
 - Without `--all`: deletes individual event instances (up to 25 matching)
 - With `--all`: deduplicates by `recurring_event_id` and deletes the series root event, removing all past and future instances
 - `--dry-run`: shows matching events without deleting
+- `--account NAME`: select Gmail account
 
-### 15.4 Create Behavior
+### 15.7 Check
 
-- `SUMMARY` is a positional argument (event title)
-- `--start` and `--end` accept RFC 3339 datetime (e.g. `2026-03-10T14:00:00-05:00`) or `YYYY-MM-DD` for all-day events
-- All-day events use the `date` field; timed events use `dateTime` in the Google Calendar API
-- On success: prints event ID and link to Google Calendar
+`corky cal check START END` queries the Calendar API to show availability in a time range.
 
-### 15.5 Check Behavior
+**Positional arguments:**
+- `START` — range start as RFC 3339 datetime
+- `END` — range end as RFC 3339 datetime
 
-- `--start` and `--end` must be RFC 3339 datetime (all-day dates not supported)
-- Fetches up to 50 events in the range via `singleEvents=true` (expands recurring)
-- Reports each busy period with event name and duration
-- Prints summary: total busy time, free time, and total range
-- If no events: reports fully available
+**Options:**
+- `--account NAME` — select Gmail account
 
-### 15.6 Edge Cases
+Fetches up to 50 events in the range via `singleEvents=true` (expands recurring). Reports each busy period with event name and duration. Prints summary: total busy time, free time, and total range. Exits with status 0 regardless of busyness.
+
+### 15.8 Edge Cases
 
 | ID | Scenario | Behavior |
 |----|----------|----------|
@@ -1473,9 +1504,10 @@ Manage Google Calendar events via the Calendar API v3. Reuses Gmail OAuth creden
 | C3 | No events match query | "No events matching '...'" |
 | C4 | Recurring series delete | Deletes series root, not instances |
 | C5 | Event already deleted | 404/410 silently ignored |
-| C6 | Invalid datetime for create | Error with format hint (RFC 3339 or YYYY-MM-DD) |
-| C7 | Check end before start | "End time must be after start time" |
+| C6 | Mixed date/datetime in create | Error: "start and end must both be dates or both be datetimes" |
+| C7 | End before start | Error: "end must be after start" |
 | C8 | Check with no events | "Fully available" message |
+| C9 | Create with past start time | Allowed (API permits past events) |
 
 ## 16. SMS Import
 
